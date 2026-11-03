@@ -1,9 +1,14 @@
 package test.task_management.model.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import test.task_management.model.dto.OrderDto;
+import test.task_management.model.dto.PageResponse;
 import test.task_management.model.entity.Offering;
 import test.task_management.model.entity.Order;
 import test.task_management.model.entity.OrderItem;
@@ -16,6 +21,7 @@ import test.task_management.model.request.BookOrderRequest;
 import test.task_management.model.request.OrderItemRequest;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 @Service
@@ -85,6 +91,29 @@ public class OrderService {
         return order.toDto();
     }
 
+    /**
+     * P2 Requirement: List orders with filters and deterministic stable pagination.
+     * Common searches use DB composite indexes without full table scans.
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<OrderDto> searchOrders(String phoneNumber, LocalDate bookingDate, OrderStatus status, int page, int size) {
+        // Enforce 1-based page index with safe bounds
+        int pageIndex = page > 0 ? page - 1 : 0;
+        int pageSize = size > 0 ? Math.min(size, 100) : 10;
+
+        // P2 Stable Order: Sort by bookingDate DESC, and tie-breaker by id DESC
+        Sort stableSort = Sort.by(Sort.Direction.DESC, "bookingDate")
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, stableSort);
+        String trimmedPhone = (phoneNumber != null && !phoneNumber.trim().isEmpty()) ? phoneNumber.trim() : null;
+
+        Page<Order> orderPage = orderRepository.searchOrders(trimmedPhone, bookingDate, status, pageable);
+        Page<OrderDto> dtoPage = orderPage.map(Order::toDto);
+
+        return PageResponse.from(dtoPage);
+    }
+
     private void validateOrderRequest(BookOrderRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Order request cannot be null");
@@ -106,4 +135,3 @@ public class OrderService {
         }
     }
 }
-
