@@ -19,6 +19,7 @@ public class OfferingDto {
     private String name;
     private BigDecimal price;
     private Boolean active;
+    private Integer dailyLimit;
 
     public Offering toEntity() {
         return Offering.builder()
@@ -26,6 +27,7 @@ public class OfferingDto {
                 .name(name)
                 .price(price)
                 .active(active != null ? active : true)
+                .dailyLimit(dailyLimit)
                 .build();
     }
 }
