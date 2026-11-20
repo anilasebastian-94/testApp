@@ -13,9 +13,11 @@ import test.task_management.model.entity.Offering;
 import test.task_management.model.entity.Order;
 import test.task_management.model.entity.OrderItem;
 import test.task_management.model.enums.OrderStatus;
+import test.task_management.model.exception.DailyLimitExceededException;
 import test.task_management.model.exception.InactiveOfferingException;
 import test.task_management.model.exception.ResourceNotFoundException;
 import test.task_management.model.repository.OfferingRepository;
+import test.task_management.model.repository.OrderItemRepository;
 import test.task_management.model.repository.OrderRepository;
 import test.task_management.model.request.BookOrderRequest;
 import test.task_management.model.request.OrderItemRequest;
@@ -30,6 +32,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OfferingRepository offeringRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Transactional
     public OrderDto placeOrder(BookOrderRequest request) {
@@ -55,12 +58,24 @@ public class OrderService {
                 throw new IllegalArgumentException("Quantity must be at least 1");
             }
 
-            Offering offering = offeringRepository.findById(itemReq.getOfferingId())
+            // P3: Acquire pessimistic write lock (SELECT ... FOR UPDATE) on the offering row
+            Offering offering = offeringRepository.findByIdForUpdate(itemReq.getOfferingId())
                     .orElseThrow(() -> new ResourceNotFoundException("Offering not found with id: " + itemReq.getOfferingId()));
 
             // P1 Requirement: Reject if offering is inactive
             if (!Boolean.TRUE.equals(offering.getActive())) {
                 throw new InactiveOfferingException("Offering '" + offering.getName() + "' is inactive and cannot be booked");
+            }
+
+            // P3 Requirement: Enforce daily limit under concurrency lock
+            if (offering.getDailyLimit() != null) {
+                int alreadyBooked = orderItemRepository.countBookedQuantityByOfferingAndDate(offering.getId(), request.getBookingDate());
+                if (alreadyBooked + itemReq.getQuantity() > offering.getDailyLimit()) {
+                    throw new DailyLimitExceededException(
+                            String.format("Daily limit of %d exceeded for offering '%s'. Already booked: %d, Requested: %d",
+                                    offering.getDailyLimit(), offering.getName(), alreadyBooked, itemReq.getQuantity())
+                    );
+                }
             }
 
             BigDecimal itemSubtotal = offering.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));

@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "INACTIVE_OFFERING", ex.getMessage(), null);
     }
 
+    @ExceptionHandler(DailyLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleDailyLimitExceededException(DailyLimitExceededException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "DAILY_LIMIT_EXCEEDED", ex.getMessage(), null);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), null);
