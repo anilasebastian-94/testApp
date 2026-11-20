@@ -33,13 +33,16 @@ public class Offering {
     @Builder.Default
     private Boolean active = true;
 
+    @Column(name = "daily_limit")
+    private Integer dailyLimit;
+
     public OfferingDto toDto() {
         return OfferingDto.builder()
                 .id(id)
                 .name(name)
                 .price(price)
                 .active(active)
+                .dailyLimit(dailyLimit)
                 .build();
     }
 }
-

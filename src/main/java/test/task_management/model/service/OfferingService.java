@@ -25,11 +25,15 @@ public class OfferingService {
         if (request.getPrice() == null || request.getPrice().signum() < 0) {
             throw new IllegalArgumentException("Offering price must be positive");
         }
+        if (request.getDailyLimit() != null && request.getDailyLimit() <= 0) {
+            throw new IllegalArgumentException("Daily limit must be greater than zero");
+        }
 
         Offering offering = Offering.builder()
                 .name(request.getName().trim())
                 .price(request.getPrice())
                 .active(request.getActive() != null ? request.getActive() : true)
+                .dailyLimit(request.getDailyLimit())
                 .build();
 
         return offeringRepository.save(offering).toDto();
@@ -57,4 +61,3 @@ public class OfferingService {
         return offeringRepository.save(offering).toDto();
     }
 }
-

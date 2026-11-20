@@ -18,5 +18,5 @@ public class CreateOfferingRequest {
     private BigDecimal price;
     @Builder.Default
     private Boolean active = true;
+    private Integer dailyLimit;
 }
-

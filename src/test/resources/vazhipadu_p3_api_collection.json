@@ -1,0 +1,133 @@
+{
+  "info": {
+    "name": "TDB Vazhipadu Service - P3 Daily Limits API Collection",
+    "description": "API Test suite for Problem 3 (P3 – Daily Limits) covering optional daily quota on offerings, rejection when exceeding daily limit, and concurrency safety.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:9080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create Offering with Daily Limit of 5",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Udayasthamana Pooja\",\n  \"price\": 1000.00,\n  \"active\": true,\n  \"dailyLimit\": 5\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/offerings",
+          "host": ["{{base_url}}"],
+          "path": ["offerings"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 Created Response",
+          "status": "Created",
+          "code": 201,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Offering created successfully\",\n  \"data\": {\n    \"id\": 4,\n    \"name\": \"Udayasthamana Pooja\",\n    \"price\": 1000.00,\n    \"active\": true,\n    \"dailyLimit\": 5\n  },\n  \"timestamp\": \"2026-11-04T10:40:00Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. Book 4 Poojas (4 of 5 Quota Used)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"devoteeName\": \"Devotee Initial\",\n  \"phoneNumber\": \"9876543210\",\n  \"nakshatra\": \"Ashwini\",\n  \"bookingDate\": \"2026-11-15\",\n  \"items\": [\n    {\n      \"offeringId\": 4,\n      \"quantity\": 4\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": ["{{base_url}}"],
+          "path": ["orders"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 Created Response",
+          "status": "Created",
+          "code": 201,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Order placed successfully\",\n  \"data\": {\n    \"id\": 10,\n    \"devoteeName\": \"Devotee Initial\",\n    \"phoneNumber\": \"9876543210\",\n    \"nakshatra\": \"Ashwini\",\n    \"bookingDate\": \"2026-11-15\",\n    \"totalAmount\": 4000.00,\n    \"status\": \"BOOKED\",\n    \"items\": [\n      {\n        \"id\": 10,\n        \"offeringId\": 4,\n        \"offeringName\": \"Udayasthamana Pooja\",\n        \"quantity\": 4,\n        \"unitPrice\": 1000.00,\n        \"subtotal\": 4000.00\n      }\n    ]\n  },\n  \"timestamp\": \"2026-11-04T10:41:00Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "3. Book 2 Poojas - Expect Rejection (4 + 2 = 6 > 5)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"devoteeName\": \"Devotee Exceed\",\n  \"phoneNumber\": \"9876543211\",\n  \"nakshatra\": \"Bharani\",\n  \"bookingDate\": \"2026-11-15\",\n  \"items\": [\n    {\n      \"offeringId\": 4,\n      \"quantity\": 2\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": ["{{base_url}}"],
+          "path": ["orders"]
+        }
+      },
+      "response": [
+        {
+          "name": "400 Bad Request - Limit Exceeded",
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"timestamp\": \"2026-11-04T10:42:00Z\",\n  \"status\": 400,\n  \"error\": \"DAILY_LIMIT_EXCEEDED\",\n  \"message\": \"Daily limit of 5 exceeded for offering 'Udayasthamana Pooja'. Already booked: 4, Requested: 2\",\n  \"details\": null\n}"
+        }
+      ]
+    },
+    {
+      "name": "4. Book 1 Pooja - Expect Success (4 + 1 = 5 <= 5)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"devoteeName\": \"Devotee Allowed\",\n  \"phoneNumber\": \"9876543212\",\n  \"nakshatra\": \"Krittika\",\n  \"bookingDate\": \"2026-11-15\",\n  \"items\": [\n    {\n      \"offeringId\": 4,\n      \"quantity\": 1\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": ["{{base_url}}"],
+          "path": ["orders"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 Created Response",
+          "status": "Created",
+          "code": 201,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Order placed successfully\",\n  \"data\": {\n    \"id\": 11,\n    \"devoteeName\": \"Devotee Allowed\",\n    \"phoneNumber\": \"9876543212\",\n    \"nakshatra\": \"Krittika\",\n    \"bookingDate\": \"2026-11-15\",\n    \"totalAmount\": 1000.00,\n    \"status\": \"BOOKED\",\n    \"items\": [\n      {\n        \"id\": 11,\n        \"offeringId\": 4,\n        \"offeringName\": \"Udayasthamana Pooja\",\n        \"quantity\": 1,\n        \"unitPrice\": 1000.00,\n        \"subtotal\": 1000.00\n      }\n    ]\n  },\n  \"timestamp\": \"2026-11-04T10:43:00Z\"\n}"
+        }
+      ]
+    }
+  ]
+}
+
