@@ -112,11 +112,9 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public PageResponse<OrderDto> searchOrders(String phoneNumber, LocalDate bookingDate, OrderStatus status, int page, int size) {
-        // Enforce 1-based page index with safe bounds
         int pageIndex = page > 0 ? page - 1 : 0;
         int pageSize = size > 0 ? Math.min(size, 100) : 10;
 
-        // P2 Stable Order: Sort by bookingDate DESC, and tie-breaker by id DESC
         Sort stableSort = Sort.by(Sort.Direction.DESC, "bookingDate")
                 .and(Sort.by(Sort.Direction.DESC, "id"));
 
@@ -127,6 +125,25 @@ public class OrderService {
         Page<OrderDto> dtoPage = orderPage.map(Order::toDto);
 
         return PageResponse.from(dtoPage);
+    }
+
+    /**
+     * P4 Requirement: Staff can cancel an order.
+     * A cancelled order immediately frees its daily limit because countBookedQuantityByOfferingAndDate
+     * ignores cancelled orders.
+     */
+    @Transactional
+    public OrderDto cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return order.toDto();
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order updated = orderRepository.save(order);
+        return updated.toDto();
     }
 
     private void validateOrderRequest(BookOrderRequest request) {

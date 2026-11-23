@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "TDB Vazhipadu Service - P4 Cancellation & Daily Collection Report Collection",
+    "description": "API Test suite for Problem 4 (P4 – Cancellation and Daily Collection) covering staff order cancellation and paisa-accurate financial collection report in Indian Standard Time (IST).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:9080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Cancel Order by Staff (Frees Daily Limit)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/orders/1/cancel",
+          "host": ["{{base_url}}"],
+          "path": ["orders", "1", "cancel"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Order Cancelled",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Order cancelled successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"devoteeName\": \"Arun Kumar\",\n    \"phoneNumber\": \"9876543210\",\n    \"nakshatra\": \"Ashwini\",\n    \"bookingDate\": \"2026-11-10\",\n    \"totalAmount\": 110.00,\n    \"status\": \"CANCELLED\",\n    \"items\": []\n  },\n  \"timestamp\": \"2026-11-20T12:00:00Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. Get Daily Collection Report in IST",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/reports/daily-collection?date=2026-11-20",
+          "host": ["{{base_url}}"],
+          "path": ["reports", "daily-collection"],
+          "query": [
+            {
+              "key": "date",
+              "value": "2026-11-20"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Paisa-Accurate IST Daily Collection",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"success\": true,\n  \"message\": \"Operation successful\",\n  \"data\": {\n    \"reportDate\": \"2026-11-20\",\n    \"timezone\": \"Asia/Kolkata (IST)\",\n    \"totalAmount\": 1110.00,\n    \"offerings\": [\n      {\n        \"offeringId\": 1,\n        \"offeringName\": \"Pushpanjali\",\n        \"count\": 2,\n        \"subtotal\": 60.00\n      },\n      {\n        \"offeringId\": 2,\n        \"offeringName\": \"Archana\",\n        \"count\": 1,\n        \"subtotal\": 50.00\n      },\n      {\n        \"offeringId\": 4,\n        \"offeringName\": \"Udayasthamana Pooja\",\n        \"count\": 1,\n        \"subtotal\": 1000.00\n      }\n    ]\n  },\n  \"timestamp\": \"2026-11-20T12:01:00Z\"\n}"
+        }
+      ]
+    }
+  ]
+}
+

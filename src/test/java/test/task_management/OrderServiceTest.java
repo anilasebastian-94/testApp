@@ -332,6 +332,24 @@ class OrderServiceTest {
         assertEquals(totalRequests - limit, failureCount.get(), "Exactly 15 simultaneous orders must fail");
     }
 
+    // ==================== P4 Tests ====================
+
+    @Test
+    @DisplayName("P4 Acceptance Criteria: Staff can cancel an order. A cancelled order frees its daily limit")
+    void testCancelOrder_SetsStatusToCancelledAndFreesLimit() {
+        Order activeOrder = createOrder(101L, "Devotee Cancel", "9876543210", LocalDate.now().plusDays(2));
+        activeOrder.setStatus(OrderStatus.BOOKED);
+
+        when(orderRepository.findById(101L)).thenReturn(Optional.of(activeOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderDto cancelled = orderService.cancelOrder(101L);
+
+        assertNotNull(cancelled);
+        assertEquals(OrderStatus.CANCELLED, cancelled.getStatus(), "Order status must transition to CANCELLED");
+        verify(orderRepository, times(1)).save(activeOrder);
+    }
+
     private Order createOrder(Long id, String devoteeName, String phoneNumber, LocalDate bookingDate) {
         return Order.builder()
                 .id(id)
